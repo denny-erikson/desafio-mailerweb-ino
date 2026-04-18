@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import Select, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.enums import BookingStatus, OutboxEventType
@@ -14,6 +15,7 @@ from app.modules.bookings.schemas import (
 )
 
 BOOKING_AGGREGATE_TYPE = "booking"
+BOOKING_OVERLAP_CONSTRAINT_NAME = "exclude_active_room_booking_overlap"
 
 
 class RoomNotFoundError(Exception):
@@ -34,6 +36,15 @@ class BookingValidationError(Exception):
 
 class BookingStateError(Exception):
     """Raised when the booking current state blocks the requested action."""
+
+
+def _is_overlap_integrity_error(error: IntegrityError) -> bool:
+    constraint_name = getattr(
+        getattr(error.orig, "diag", None),
+        "constraint_name",
+        None,
+    )
+    return constraint_name == BOOKING_OVERLAP_CONSTRAINT_NAME
 
 
 def _base_booking_query() -> Select[tuple[Booking]]:
@@ -199,6 +210,13 @@ def create_booking(
             event_type=OutboxEventType.BOOKING_CREATED,
         )
         db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if _is_overlap_integrity_error(exc):
+            raise BookingConflictError(
+                "Booking time conflicts with an existing booking",
+            ) from exc
+        raise
     except Exception:
         db.rollback()
         raise
@@ -242,6 +260,13 @@ def update_booking(
             event_type=OutboxEventType.BOOKING_UPDATED,
         )
         db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if _is_overlap_integrity_error(exc):
+            raise BookingConflictError(
+                "Booking time conflicts with an existing booking",
+            ) from exc
+        raise
     except Exception:
         db.rollback()
         raise

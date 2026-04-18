@@ -104,3 +104,133 @@ def test_cancel_booking_is_logical_and_keeps_record(
     assert persisted_booking is not None
     assert persisted_booking.status == BookingStatus.CANCELED
     assert persisted_booking.canceled_at is not None
+
+
+def test_active_booking_overlap_returns_conflict(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    room_id: int,
+) -> None:
+    start_at = datetime.now(UTC).replace(microsecond=0) + timedelta(days=1)
+    end_at = start_at + timedelta(hours=1)
+
+    first_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "First Booking",
+            "room_id": room_id,
+            "start_at": start_at.isoformat(),
+            "end_at": end_at.isoformat(),
+            "participants": [
+                {"email": "alice@example.com", "full_name": "Alice"},
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert first_response.status_code == 201
+
+    overlapping_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "Overlapping Booking",
+            "room_id": room_id,
+            "start_at": (start_at + timedelta(minutes=30)).isoformat(),
+            "end_at": (end_at + timedelta(minutes=30)).isoformat(),
+            "participants": [
+                {"email": "bob@example.com", "full_name": "Bob"},
+            ],
+        },
+        headers=auth_headers,
+    )
+
+    assert overlapping_response.status_code == 409
+    assert overlapping_response.json()["detail"] == (
+        "Booking time conflicts with an existing booking"
+    )
+
+
+def test_touching_booking_slots_are_allowed(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    room_id: int,
+) -> None:
+    start_at = datetime.now(UTC).replace(microsecond=0) + timedelta(days=1)
+    end_at = start_at + timedelta(hours=1)
+
+    first_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "First Booking",
+            "room_id": room_id,
+            "start_at": start_at.isoformat(),
+            "end_at": end_at.isoformat(),
+            "participants": [
+                {"email": "alice@example.com", "full_name": "Alice"},
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert first_response.status_code == 201
+
+    touching_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "Touching Booking",
+            "room_id": room_id,
+            "start_at": end_at.isoformat(),
+            "end_at": (end_at + timedelta(hours=1)).isoformat(),
+            "participants": [
+                {"email": "bob@example.com", "full_name": "Bob"},
+            ],
+        },
+        headers=auth_headers,
+    )
+
+    assert touching_response.status_code == 201
+
+
+def test_canceled_booking_no_longer_blocks_new_booking(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    room_id: int,
+) -> None:
+    start_at = datetime.now(UTC).replace(microsecond=0) + timedelta(days=1)
+    end_at = start_at + timedelta(hours=1)
+
+    first_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "Cancelable Booking",
+            "room_id": room_id,
+            "start_at": start_at.isoformat(),
+            "end_at": end_at.isoformat(),
+            "participants": [
+                {"email": "alice@example.com", "full_name": "Alice"},
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert first_response.status_code == 201
+    booking_id = first_response.json()["id"]
+
+    cancel_response = client.post(
+        f"/api/v1/bookings/{booking_id}/cancel",
+        headers=auth_headers,
+    )
+    assert cancel_response.status_code == 200
+
+    replacement_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "Replacement Booking",
+            "room_id": room_id,
+            "start_at": start_at.isoformat(),
+            "end_at": end_at.isoformat(),
+            "participants": [
+                {"email": "bob@example.com", "full_name": "Bob"},
+            ],
+        },
+        headers=auth_headers,
+    )
+
+    assert replacement_response.status_code == 201
