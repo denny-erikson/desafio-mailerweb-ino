@@ -1,24 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import StrEnum
 
 from sqlalchemy import DateTime, Enum, Index, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-
-
-class OutboxEventType(StrEnum):
-    BOOKING_CREATED = "BOOKING_CREATED"
-    BOOKING_UPDATED = "BOOKING_UPDATED"
-    BOOKING_CANCELED = "BOOKING_CANCELED"
-
-
-class OutboxEventStatus(StrEnum):
-    PENDING = "PENDING"
-    PROCESSED = "PROCESSED"
-    FAILED = "FAILED"
+from app.db.enums import OutboxEventStatus, OutboxEventType
 
 
 class OutboxEvent(Base):

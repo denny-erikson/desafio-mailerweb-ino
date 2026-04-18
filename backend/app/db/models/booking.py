@@ -1,23 +1,18 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.db.enums import BookingStatus
 
 if TYPE_CHECKING:
     from app.db.models.booking_participant import BookingParticipant
     from app.db.models.room import Room
     from app.db.models.user import User
-
-
-class BookingStatus(StrEnum):
-    ACTIVE = "ACTIVE"
-    CANCELED = "CANCELED"
 
 
 class Booking(Base):
