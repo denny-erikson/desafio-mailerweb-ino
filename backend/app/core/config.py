@@ -59,6 +59,19 @@ class Settings(BaseSettings):
     )
     mailer_provider: str = Field(default="console", alias="MAILER_PROVIDER")
 
+    initial_user_email: str = Field(
+        default="admin@meeting-room-booking.local",
+        alias="INITIAL_USER_EMAIL",
+    )
+    initial_user_full_name: str = Field(
+        default="Admin User",
+        alias="INITIAL_USER_FULL_NAME",
+    )
+    initial_user_password: str = Field(
+        default="change-this-password",
+        alias="INITIAL_USER_PASSWORD",
+    )
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [
