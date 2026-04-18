@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import Select, select
@@ -6,15 +6,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db.enums import BookingStatus, OutboxEventType
 from app.db.models import Booking, BookingParticipant, OutboxEvent, Room, User
+from app.modules.bookings.constants import MAX_BOOKING_DURATION, MIN_BOOKING_DURATION
 from app.modules.bookings.schemas import (
     BookingCreateRequest,
     BookingParticipantInput,
     BookingUpdateRequest,
 )
 
-
-MIN_BOOKING_DURATION = timedelta(minutes=15)
-MAX_BOOKING_DURATION = timedelta(hours=8)
 BOOKING_AGGREGATE_TYPE = "booking"
 
 

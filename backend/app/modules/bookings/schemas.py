@@ -3,6 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.db.enums import BookingStatus
+from app.modules.bookings.constants import (
+    MAX_BOOKING_DURATION,
+    MIN_BOOKING_DURATION,
+)
 
 
 class BookingParticipantInput(BaseModel):
@@ -45,10 +49,23 @@ class BookingBaseRequest(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def validate_unique_participants(self) -> "BookingBaseRequest":
+    def validate_booking_request(self) -> "BookingBaseRequest":
         emails = [participant.email for participant in self.participants]
         if len(emails) != len(set(emails)):
             raise ValueError("Participants must have unique emails")
+
+        if self.start_at.tzinfo is None or self.start_at.utcoffset() is None:
+            raise ValueError("start_at must include timezone")
+        if self.end_at.tzinfo is None or self.end_at.utcoffset() is None:
+            raise ValueError("end_at must include timezone")
+        if self.start_at >= self.end_at:
+            raise ValueError("start_at must be before end_at")
+
+        duration = self.end_at - self.start_at
+        if duration < MIN_BOOKING_DURATION:
+            raise ValueError("Booking duration must be at least 15 minutes")
+        if duration > MAX_BOOKING_DURATION:
+            raise ValueError("Booking duration must be at most 8 hours")
 
         return self
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -19,6 +19,22 @@ class Booking(Base):
     __tablename__ = "bookings"
     __table_args__ = (
         Index("ix_bookings_room_id_start_at_end_at", "room_id", "start_at", "end_at"),
+        CheckConstraint("start_at < end_at", name="start_before_end"),
+        CheckConstraint(
+            "end_at - start_at >= interval '15 minutes'",
+            name="min_duration_15_minutes",
+        ),
+        CheckConstraint(
+            "end_at - start_at <= interval '8 hours'",
+            name="max_duration_8_hours",
+        ),
+        CheckConstraint(
+            "("
+            "(status = 'ACTIVE' AND canceled_at IS NULL) OR "
+            "(status = 'CANCELED' AND canceled_at IS NOT NULL)"
+            ")",
+            name="status_canceled_at_consistency",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
