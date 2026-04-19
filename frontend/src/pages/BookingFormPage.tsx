@@ -339,7 +339,7 @@ export function BookingFormPage() {
 
             <div className="participants-list">
               {participants.map((participant, index) => (
-                <div className="participant-row" key={`${index}-${participant.email}`}>
+                <div className="participant-row" key={index}>
                   <label className="field">
                     <span>E-mail</span>
                     <input
