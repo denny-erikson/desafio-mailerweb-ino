@@ -10,6 +10,7 @@ from app.core.config import get_settings
 from app.db.enums import OutboxEventStatus
 from app.db.models import OutboxEvent
 from app.db.session import SessionLocal
+from app.worker.mailer import build_mailer
 
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 class OutboxWorker:
     def __init__(self) -> None:
         self.settings = get_settings()
+        self.mailer = build_mailer(self.settings)
 
     def run_forever(self) -> None:
         logger.info(
