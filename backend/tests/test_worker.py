@@ -1,11 +1,21 @@
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete
+from sqlalchemy.orm import Session
 
 from app.db.enums import OutboxEventStatus, OutboxEventType
 from app.db.models import OutboxEvent
 from app.db.session import SessionLocal
 from app.worker.processor import OutboxWorker
+
+
+class RecordingWorker(OutboxWorker):
+    def __init__(self) -> None:
+        super().__init__()
+        self.processed_event_ids: list[int] = []
+
+    def process_event(self, db: Session, event: OutboxEvent) -> None:
+        self.processed_event_ids.append(event.id)
 
 
 def test_worker_fetches_only_eligible_pending_events() -> None:
@@ -85,6 +95,38 @@ def test_worker_respects_batch_size_ordering() -> None:
     try:
         assert len(fetched_ids) == 2
         assert fetched_ids == created_ids[:2]
+    finally:
+        with SessionLocal() as db:
+            db.execute(delete(OutboxEvent).where(OutboxEvent.id.in_(created_ids)))
+            db.commit()
+
+
+def test_run_once_processes_events_in_stable_batch_order() -> None:
+    worker = RecordingWorker()
+    worker.settings.worker_batch_size = 2
+    created_ids: list[int] = []
+
+    with SessionLocal() as db:
+        events = [
+            OutboxEvent(
+                aggregate_type="booking",
+                aggregate_id=301 + offset,
+                event_type=OutboxEventType.BOOKING_CREATED,
+                payload={"index": offset},
+                status=OutboxEventStatus.PENDING,
+                idempotency_key=f"worker-run-once-{offset}",
+            )
+            for offset in range(3)
+        ]
+        db.add_all(events)
+        db.commit()
+        created_ids.extend(event.id for event in events)
+
+    try:
+        processed_count = worker.run_once()
+
+        assert processed_count == 2
+        assert worker.processed_event_ids == created_ids[:2]
     finally:
         with SessionLocal() as db:
             db.execute(delete(OutboxEvent).where(OutboxEvent.id.in_(created_ids)))

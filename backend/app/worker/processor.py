@@ -32,13 +32,32 @@ class OutboxWorker:
     def run_once(self) -> int:
         with SessionLocal() as db:
             pending_events = self._fetch_pending_events(db)
+            processed_count = 0
+
+            try:
+                for event in pending_events:
+                    self.process_event(db, event)
+                    processed_count += 1
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise
 
         logger.info(
-            "Outbox worker fetched %s pending event(s): %s",
-            len(pending_events),
+            "Outbox worker processed %s pending event(s): %s",
+            processed_count,
             [event.id for event in pending_events],
         )
-        return len(pending_events)
+        return processed_count
+
+    def process_event(self, db: Session, event: OutboxEvent) -> None:
+        logger.info(
+            "Outbox worker received event id=%s type=%s aggregate=%s:%s",
+            event.id,
+            event.event_type.value,
+            event.aggregate_type,
+            event.aggregate_id,
+        )
 
     def _pending_events_statement(self) -> Select[tuple[OutboxEvent]]:
         return (
