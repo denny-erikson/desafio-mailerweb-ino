@@ -140,6 +140,14 @@ def _build_participants(
     ]
 
 
+def list_bookings(db: Session) -> list[Booking]:
+    return list(
+        db.scalars(
+            _base_booking_query().order_by(Booking.start_at.asc(), Booking.id.asc()),
+        ).all(),
+    )
+
+
 def _build_outbox_payload(booking: Booking, room: Room) -> dict:
     return {
         "booking_id": booking.id,

@@ -8,6 +8,56 @@ from app.db.models import Booking
 from app.db.session import SessionLocal
 
 
+def test_list_bookings_returns_existing_records(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    room_id: int,
+) -> None:
+    start_at = datetime.now(UTC).replace(microsecond=0) + timedelta(days=1)
+    end_at = start_at + timedelta(hours=1)
+
+    first_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "Alpha Booking",
+            "room_id": room_id,
+            "start_at": start_at.isoformat(),
+            "end_at": end_at.isoformat(),
+            "participants": [
+                {"email": "alpha@example.com", "full_name": "Alpha"},
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert first_response.status_code == 201
+
+    second_response = client.post(
+        "/api/v1/bookings",
+        json={
+            "title": "Beta Booking",
+            "room_id": room_id,
+            "start_at": (end_at + timedelta(minutes=15)).isoformat(),
+            "end_at": (end_at + timedelta(hours=1, minutes=15)).isoformat(),
+            "participants": [
+                {"email": "beta@example.com", "full_name": "Beta"},
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert second_response.status_code == 201
+
+    list_response = client.get("/api/v1/bookings", headers=auth_headers)
+
+    assert list_response.status_code == 200
+    payload = list_response.json()
+    assert len(payload) >= 2
+    assert [payload[0]["title"], payload[1]["title"]] == [
+        "Alpha Booking",
+        "Beta Booking",
+    ]
+    assert payload[0]["participants"][0]["email"] == "alpha@example.com"
+
+
 def test_create_and_update_booking_participants(
     client: TestClient,
     auth_headers: dict[str, str],

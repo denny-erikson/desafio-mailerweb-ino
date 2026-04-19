@@ -20,12 +20,22 @@ from app.modules.bookings.service import (
     RoomNotFoundError,
     cancel_booking,
     create_booking,
+    list_bookings,
     update_booking,
 )
 
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 settings = get_settings()
+
+
+@router.get("", response_model=list[BookingResponse])
+def list_bookings_endpoint(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(get_current_user)],
+) -> list[BookingResponse]:
+    bookings = list_bookings(db)
+    return [BookingResponse.model_validate(booking) for booking in bookings]
 
 
 @router.post(

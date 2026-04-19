@@ -30,6 +30,9 @@ def test_bookings_endpoints_require_authentication(
     client: TestClient,
     room_id: int,
 ) -> None:
+    list_response = client.get("/api/v1/bookings")
+    assert list_response.status_code == 401
+
     create_response = client.post(
         "/api/v1/bookings",
         json={
