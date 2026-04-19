@@ -237,6 +237,28 @@ def test_worker_processes_booking_canceled_event() -> None:
     assert event.processed_at is not None
 
 
+def test_worker_skips_already_processed_event_idempotently() -> None:
+    mailer = RecordingMailer()
+    worker = OutboxWorker(mailer=mailer)
+    event = OutboxEvent(
+        aggregate_type="booking",
+        aggregate_id=404,
+        event_type=OutboxEventType.BOOKING_CREATED,
+        payload=build_booking_payload("Idempotent Booking"),
+        status=OutboxEventStatus.PENDING,
+        idempotency_key="idempotent-event",
+    )
+
+    with SessionLocal() as db:
+        worker.process_event(db, event)
+        first_processed_at = event.processed_at
+        worker.process_event(db, event)
+
+    assert len(mailer.messages) == 2
+    assert event.status == OutboxEventStatus.PROCESSED
+    assert event.processed_at == first_processed_at
+
+
 def test_worker_retries_failed_event_and_persists_error_state() -> None:
     worker = OutboxWorker(mailer=FailingMailer("temporary mailer error"))
     created_ids: list[int] = []

@@ -65,6 +65,14 @@ class OutboxWorker:
         return processed_count
 
     def process_event(self, db: Session, event: OutboxEvent) -> None:
+        if event.status == OutboxEventStatus.PROCESSED or event.processed_at is not None:
+            logger.info(
+                "Skipping already processed event id=%s idempotency_key=%s",
+                event.id,
+                event.idempotency_key,
+            )
+            return
+
         logger.info(
             "Outbox worker received event id=%s type=%s aggregate=%s:%s",
             event.id,
