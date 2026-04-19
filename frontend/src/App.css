@@ -1,22 +1,13 @@
-.auth-shell,
-.dashboard-shell {
+.auth-shell {
   min-height: 100vh;
   padding: 1rem;
-}
-
-.auth-shell {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.dashboard-shell {
-  padding-top: 1.25rem;
-  padding-bottom: 1.5rem;
-}
-
 .auth-card,
-.dashboard-card {
+.surface-card {
   width: 100%;
   border: 1px solid var(--color-border);
   border-radius: 1.25rem;
@@ -29,14 +20,99 @@
   padding: 1.25rem;
 }
 
-.dashboard-card {
-  max-width: 52rem;
-  padding: 1.25rem;
+.auth-card--centered {
+  text-align: center;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.app-header {
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto 1rem;
+  max-width: 72rem;
+}
+
+.app-brand,
+.app-userbar {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.app-eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.app-userinfo {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.app-userinfo strong,
+.app-userinfo small {
+  display: block;
+}
+
+.app-userlabel {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 auto 1rem;
+  max-width: 72rem;
+  padding: 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: rgba(255, 254, 252, 0.75);
+  overflow-x: auto;
+}
+
+.nav-link {
+  flex: 1 0 auto;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.nav-link--active {
+  background: var(--color-text-strong);
+  color: var(--color-surface);
+}
+
+.page-content {
+  max-width: 72rem;
   margin: 0 auto;
 }
 
-.auth-card--centered {
-  text-align: center;
+.surface-card {
+  padding: 1.25rem;
 }
 
 .status-chip {
@@ -54,7 +130,7 @@
 }
 
 .auth-card h1,
-.dashboard-card h1 {
+.section-title {
   margin: 0.85rem 0 0.5rem;
   color: var(--color-text-strong);
   font-size: 1.75rem;
@@ -62,11 +138,17 @@
   letter-spacing: -0.03em;
 }
 
-.auth-copy {
+.auth-copy,
+.section-copy {
   margin: 0;
   color: var(--color-text-muted);
   font-size: 0.96rem;
   line-height: 1.6;
+}
+
+.section-header {
+  display: grid;
+  gap: 1rem;
 }
 
 .auth-form {
@@ -130,6 +212,13 @@
   color: var(--color-surface);
 }
 
+.primary-button--inline {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .ghost-button {
   width: 100%;
   border: 1px solid var(--color-border-strong);
@@ -160,18 +249,15 @@
   color: #991b1b;
 }
 
-.dashboard-header {
-  display: grid;
-  gap: 1rem;
-}
-
 .details-grid {
   display: grid;
   gap: 0.75rem;
   margin: 1.5rem 0 0;
 }
 
-.details-grid div {
+.details-grid div,
+.state-card,
+.room-card {
   padding: 1rem;
   border: 1px solid var(--color-border);
   border-radius: 1rem;
@@ -194,14 +280,56 @@
   line-height: 1.4;
 }
 
+.state-card {
+  margin-top: 1.5rem;
+}
+
+.state-card strong,
+.room-card h3 {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--color-text-strong);
+}
+
+.state-card p,
+.room-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.rooms-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.room-card__header {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.room-capacity {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 @media (min-width: 720px) {
   .auth-shell,
-  .dashboard-shell {
+  .app-shell {
     padding: 2rem;
   }
 
   .auth-card,
-  .dashboard-card {
+  .surface-card {
     border-radius: 1.5rem;
   }
 
@@ -209,13 +337,17 @@
     padding: 2rem;
   }
 
-  .dashboard-card {
+  .surface-card {
     padding: 1.75rem;
   }
 
-  .dashboard-header {
+  .app-header {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
+  }
+
+  .app-userbar {
+    justify-items: end;
   }
 
   .ghost-button {
@@ -223,7 +355,18 @@
     min-width: 7rem;
   }
 
-  .details-grid {
+  .section-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .details-grid,
+  .rooms-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .room-card__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
   }
 }
