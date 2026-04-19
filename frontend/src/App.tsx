@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
+import { BookingsPage } from './pages/BookingsPage'
 import { LoginPage } from './pages/LoginPage'
 import { RoomsPage } from './pages/RoomsPage'
 import { AppLayout } from './layouts/AppLayout'
@@ -19,6 +20,7 @@ function App() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/bookings" element={<BookingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

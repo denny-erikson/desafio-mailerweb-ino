@@ -45,6 +45,14 @@ export function AppLayout() {
         >
           Salas
         </NavLink>
+        <NavLink
+          to="/bookings"
+          className={({ isActive }) =>
+            isActive ? 'nav-link nav-link--active' : 'nav-link'
+          }
+        >
+          Reservas
+        </NavLink>
       </nav>
 
       <section className="page-content">
