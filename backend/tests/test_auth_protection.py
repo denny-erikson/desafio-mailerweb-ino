@@ -25,6 +25,12 @@ def test_rooms_endpoints_require_authentication(client: TestClient) -> None:
     )
     assert create_response.status_code == 401
 
+    update_response = client.put(
+        "/api/v1/rooms/1",
+        json={"name": "Unauthorized Room Updated", "capacity": 6},
+    )
+    assert update_response.status_code == 401
+
 
 def test_bookings_endpoints_require_authentication(
     client: TestClient,
