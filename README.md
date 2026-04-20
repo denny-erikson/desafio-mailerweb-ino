@@ -1,252 +1,346 @@
+# Meeting Room Booking
 
-# 🧪 Coding Test — Fullstack
-## Meeting Room Booking + Async Notification System
+Aplicação full stack para gerenciamento de salas e reservas, com autenticação JWT, prevenção de conflito de horários e processamento assíncrono de notificações por e-mail com padrão Outbox + Worker.
 
----
+## Visão geral
 
-# 📌 Sobre o Desafio
+O projeto foi dividido em:
 
-Você deverá desenvolver uma aplicação **Fullstack** para gerenciamento de reservas de salas com um sistema de notificação assíncrono por e-mail.
+- `backend`: API em FastAPI com PostgreSQL, SQLAlchemy, Alembic e worker de outbox
+- `frontend`: aplicação React com Vite
+- `docker-compose.yml`: stack local com PostgreSQL, backend, worker, frontend e MailHog opcional
 
-O objetivo é avaliar como você:
+## Stack
 
-- Estrutura a aplicação
-- Modela os dados
-- Implementa regras de negócio
-- Trata concorrência
-- Organiza processamento assíncrono
-- Escreve testes
-- Documenta decisões técnicas
+### Backend
 
-Você tem liberdade de arquitetura e implementação, desde que atenda aos requisitos descritos.
+- Python 3.12
+- FastAPI
+- SQLAlchemy 2
+- Alembic
+- PostgreSQL
+- Poetry
 
----
+### Frontend
 
-# ⏳ Prazo
+- React 19
+- Vite
+- React Router
+- Axios
+- Vitest
+- Testing Library
 
-Após receber o link do desafio, você tem **3 dias corridos** para submeter sua solução.
+## Funcionalidades implementadas
 
----
+- autenticação por JWT
+- criação, listagem e detalhamento de salas
+- criação, edição, listagem e cancelamento lógico de reservas
+- participantes por reserva
+- validações de data, duração e timezone
+- bloqueio de conflito de horários por regra de negócio e por proteção no PostgreSQL
+- criação de eventos no outbox na mesma transação da reserva
+- worker separado com retry, persistência de erro e idempotência
+- frontend consumindo a API real
+- testes de backend e frontend
 
-# 🚀 Como proceder
+## Como rodar com Docker
 
-1. Faça o **fork** do repositório oficial:
-   https://github.com/MailerWeb/desafio-mailerweb-ino
+Esta é a forma recomendada para avaliação, porque sobe praticamente toda a estrutura com um único comando.
 
-2. Desenvolva sua solução no seu fork.
+### 1. Preparar variáveis de ambiente
 
-3. Ao finalizar, envie o link do seu repositório para avaliação.
+Crie o arquivo `.env` a partir do exemplo:
 
----
+```bash
+cp .env.example .env
+```
 
-# 🎯 Objetivo do Projeto
+### 2. Subir a stack principal
 
-Construir uma aplicação que permita:
+```bash
+docker compose up -d --build
+```
 
-- Criar e gerenciar salas
-- Criar reservas com prevenção de conflito de horário
-- Editar e cancelar reservas
-- Notificar automaticamente os participantes por e-mail quando houver mudanças
+Isso sobe:
 
----
+- `postgres`
+- `backend`
+- `worker`
+- `frontend`
 
-# 🧱 Stack
+URLs úteis:
 
-## Backend
-- Python 3.10+
-- Framework livre (FastAPI, Flask, Django etc.)
-- Banco livre (SQLite permitido, PostgreSQL recomendado)
+- frontend: `http://localhost:4173`
+- backend: `http://localhost:8000`
+- documentação da API: `http://localhost:8000/docs`
 
-## Frontend
-- React ou Next.js
+### 3. Subir o MailHog opcionalmente
 
-Estrutura de pastas livre (monorepo ou separadas).
+O MailHog está disponível como apoio local para inspeção de e-mails, mas hoje o projeto usa `MAILER_PROVIDER=console` por padrão. Ou seja, o worker registra o envio nos logs, e não por SMTP real.
 
----
+Se quiser subir o MailHog mesmo assim:
 
-# 📖 Contexto do Sistema
+```bash
+docker compose --profile smtp up -d --build
+```
 
-A empresa precisa organizar reservas de salas e garantir que os participantes sejam notificados automaticamente quando uma reunião for:
+URL:
 
-- Criada
-- Alterada
-- Cancelada
+- MailHog: `http://localhost:8025`
 
-As notificações devem ser processadas de forma **assíncrona**, via worker.
+### 4. Rodar o seed inicial manualmente
 
----
+Se quiser garantir a criação do usuário inicial:
 
-# 🔧 Requisitos Funcionais
+```bash
+docker compose exec backend poetry run python -m scripts.seed_initial_user
+```
 
-## 1️⃣ Salas
+### 5. Derrubar a stack
 
-- Criar sala
-- Listar salas
-- Visualizar detalhes
-- Nome único
-- Capacidade válida
+```bash
+docker compose down
+```
 
----
+## Como rodar localmente sem Docker
 
-## 2️⃣ Reservas
+### Backend
 
-Uma reserva deve conter:
+```bash
+cd backend
+poetry install
+poetry run alembic upgrade head
+poetry run python -m scripts.seed_initial_user
+poetry run uvicorn app.main:app --reload
+```
 
-- Título
-- Sala
-- Horário de início e fim
-- Status (ativa ou cancelada)
-- Participantes
+API:
 
-### Regras obrigatórias
+- `http://localhost:8000`
+- docs: `http://localhost:8000/docs`
 
-- Datas em ISO 8601 com timezone
-- `start_at < end_at`
-- Duração mínima: 15 minutos
-- Duração máxima: 8 horas
-- Não pode haver sobreposição de reservas ativas na mesma sala
-- Reservas canceladas não devem ser removidas
+### Worker
 
-### Overlap
+```bash
+cd backend
+poetry run outbox-worker
+```
 
-Existe conflito quando:
+Executar apenas um ciclo:
 
-    new_start < existing_end AND new_end > existing_start
+```bash
+cd backend
+poetry run outbox-worker --once
+```
 
-Reservas que apenas encostam no horário são permitidas.
+### Frontend
 
-### Concorrência
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-A aplicação deve impedir que duas requisições simultâneas criem reservas conflitantes.
+URL:
 
-Documente sua estratégia (transação, lock, constraint etc.).
+- `http://localhost:5173`
 
----
+## Variáveis de ambiente
 
-# 🔐 Autenticação
+As principais variáveis estão em `.env.example`.
 
-Deve existir mecanismo de autenticação.
+### Aplicação
 
-Você pode usar:
+- `APP_NAME`
+- `APP_ENV`
+- `APP_DEBUG`
+- `API_V1_PREFIX`
+- `SECRET_KEY`
+- `ACCESS_TOKEN_EXPIRE_MINUTES`
+- `ALGORITHM`
 
-- JWT
-- Token fixo
-- Sistema simplificado
+### Backend
 
-Deve existir conceito de usuário.
+- `BACKEND_HOST`
+- `BACKEND_PORT`
+- `BACKEND_CORS_ORIGINS`
 
-Usuários autenticados podem:
+### Banco de dados
 
-- Criar reservas
-- Editar reservas
-- Cancelar reservas
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_SCHEMA`
+- `DATABASE_URL`
 
----
+### Worker
 
-# ✉️ Sistema de Mensageria (Obrigatório)
+- `WORKER_POLL_INTERVAL_SECONDS`
+- `WORKER_BATCH_SIZE`
+- `OUTBOX_MAX_ATTEMPTS`
+- `OUTBOX_RETRY_DELAY_SECONDS`
 
-Além das reservas, o sistema deve implementar um mecanismo assíncrono de notificação por e-mail usando padrão **Outbox + Worker**.
+### Mailer
 
-## Eventos que devem gerar notificação
+- `MAILER_FROM_EMAIL`
+- `MAILER_PROVIDER`
 
-- BOOKING_CREATED
-- BOOKING_UPDATED
-- BOOKING_CANCELED
+### Seed inicial
 
-## Requisitos
+- `INITIAL_USER_EMAIL`
+- `INITIAL_USER_FULL_NAME`
+- `INITIAL_USER_PASSWORD`
 
-Ao criar/alterar/cancelar uma reserva:
+### Frontend
 
-1. Persistir alteração da reserva
-2. Criar um evento na tabela de Outbox
-3. Garantir que ambos ocorram na mesma transação
+- `VITE_API_BASE_URL`
 
----
+## Usuário inicial
 
-## Worker
+O seed usa os valores do `.env`. No exemplo atual:
 
-Deve existir um worker separado que:
+- e-mail: `admin@meetingroom.local`
+- senha: `123@mudar`
 
-- Busca eventos pendentes
-- Processa envio de e-mails
-- Marca como processado
-- Implementa retry com controle de tentativas
-- Evita envio duplicado (idempotência)
+## Estratégia de concorrência
 
-O worker pode ser:
+O projeto protege conflito de reservas em dois níveis.
 
-- Celery
-- RQ
-- Processo simples em loop
-- Command separado
+### Camada de aplicação
 
-Documente como executar.
+A API valida conflito usando a regra:
 
----
-## Conteúdo mínimo do e-mail
+```text
+new_start < existing_end AND new_end > existing_start
+```
 
-- Título da reunião
-- Sala
-- Horário
-- Tipo de evento (criada, alterada, cancelada)
+Com isso:
 
-Pode ser texto simples.
+- reservas sobrepostas são bloqueadas
+- reservas que apenas encostam no horário são permitidas
 
----
+### Camada de banco
 
-# 🧪 Testes
+Além da validação da aplicação, o PostgreSQL usa uma constraint de exclusão com `EXCLUDE USING gist`, baseada em:
 
-## Backend
+- `room_id`
+- `tstzrange(start_at, end_at, '[)')`
+- apenas reservas com status `ACTIVE`
 
-Esperamos testes cobrindo:
+Essa estratégia evita que duas requisições simultâneas criem reservas conflitantes para a mesma sala.
 
-- Validação de datas
-- Conflito de reserva
-- Permissões
-- Criação de evento no outbox
-- Processamento pelo worker
-- Idempotência de envio
+## Estratégia de Outbox + Worker
 
-## Frontend
+Ao criar, editar ou cancelar uma reserva:
 
-Testes mínimos para:
+1. a alteração da reserva é persistida
+2. um evento é gravado em `outbox_events`
+3. ambos são confirmados na mesma transação
 
-- Criar reserva
-- Exibir erro de conflito
-- Fluxo básico de login
-- Integração com backend
+Eventos implementados:
 
----
+- `BOOKING_CREATED`
+- `BOOKING_UPDATED`
+- `BOOKING_CANCELED`
 
-# 🖥️ Frontend
+O worker:
 
-Deve permitir:
+- busca eventos pendentes em lote
+- respeita `next_retry_at`
+- evita disputa entre múltiplos workers com `FOR UPDATE SKIP LOCKED`
+- processa os eventos
+- marca `PROCESSED` em caso de sucesso
+- incrementa `attempts` em caso de falha
+- grava `last_error`
+- agenda `next_retry_at`
+- marca `FAILED` ao atingir o limite de tentativas
+- evita reprocessamento de evento já concluído
 
-- Login
-- Listar salas
-- Criar reserva
-- Editar/cancelar reserva
+## Decisões técnicas
 
-UX deve tratar:
+- FastAPI foi escolhida pela rapidez de implementação, boa tipagem e integração simples com Pydantic
+- PostgreSQL foi usado porque o desafio pede atenção especial à concorrência, e a constraint de exclusão resolve bem esse cenário
+- o padrão Outbox + Worker foi mantido no próprio banco para reduzir complexidade operacional
+- o provider inicial de e-mail é `console`, suficiente para demonstrar o processamento assíncrono sem depender de SMTP real
+- o frontend foi organizado com rotas protegidas, contexto de autenticação e páginas separadas para salas e reservas
+- o `docker compose` foi configurado para facilitar a avaliação com a stack completa em containers
 
-- Loading
-- Erros
-- Feedback ao usuário
+## Testes
 
----
+### Backend
 
-# 📦 Entrega
+Rodar:
 
-Seu repositório deve conter:
+```bash
+cd backend
+poetry run pytest -q
+```
 
-- Backend
-- Frontend
-- Testes
-- README com:
-  - Como rodar backend
-  - Como rodar frontend
-  - Como rodar worker
-  - Variáveis de ambiente
-  - Decisões técnicas
+Coberturas principais:
 
-Boa sorte 🚀
+- validação de datas
+- conflito de reserva
+- permissões
+- criação de evento no outbox
+- processamento do worker
+- retry
+- idempotência
+
+### Frontend
+
+Rodar:
+
+```bash
+cd frontend
+npm test
+```
+
+Coberturas principais:
+
+- login
+- criação de reserva
+- bloqueio de horários no passado
+- exibição do erro de conflito
+- integração básica das telas com a camada de API
+
+## Como verificar o outbox e o worker
+
+### Logs do worker
+
+Se a stack estiver em Docker:
+
+```bash
+docker logs -f meeting-room-booking-worker
+```
+
+### Eventos no banco
+
+```bash
+docker exec -it meeting-room-booking-postgres psql -U postgres -d meeting_room_booking
+```
+
+Depois:
+
+```sql
+SELECT
+  id,
+  aggregate_type,
+  aggregate_id,
+  event_type,
+  status,
+  attempts,
+  processed_at,
+  next_retry_at,
+  created_at
+FROM outbox_events
+ORDER BY id DESC;
+```
+
+## Observações finais
+
+- o cancelamento de reserva é lógico, sem remoção física do registro
+- a API bloqueia reservas com horário de início no passado
+- o frontend também previne esse envio antes da chamada à API
+- o MailHog está disponível apenas como apoio opcional; o envio atual do worker permanece no provider `console`
