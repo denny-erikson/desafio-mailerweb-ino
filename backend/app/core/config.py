@@ -58,6 +58,28 @@ class Settings(BaseSettings):
         alias="MAILER_FROM_EMAIL",
     )
     mailer_provider: str = Field(default="console", alias="MAILER_PROVIDER")
+    mailer_smtp_host: str = Field(default="localhost", alias="MAILER_SMTP_HOST")
+    mailer_smtp_port: int = Field(default=1025, alias="MAILER_SMTP_PORT")
+    mailer_smtp_username: str | None = Field(
+        default=None,
+        alias="MAILER_SMTP_USERNAME",
+    )
+    mailer_smtp_password: str | None = Field(
+        default=None,
+        alias="MAILER_SMTP_PASSWORD",
+    )
+    mailer_smtp_use_tls: bool = Field(
+        default=False,
+        alias="MAILER_SMTP_USE_TLS",
+    )
+    mailer_smtp_use_ssl: bool = Field(
+        default=False,
+        alias="MAILER_SMTP_USE_SSL",
+    )
+    mailer_smtp_timeout_seconds: int = Field(
+        default=10,
+        alias="MAILER_SMTP_TIMEOUT_SECONDS",
+    )
 
     initial_user_email: str = Field(
         default="admin@meeting-room-booking.local",

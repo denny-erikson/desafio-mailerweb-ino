@@ -26,6 +26,7 @@ poetry run outbox-worker --once
 - eventos de reserva sao persistidos em `outbox_events`
 - reserva e evento sao gravados na mesma transacao
 - o worker busca pendencias em lote
-- o provider inicial de e-mail e `console`
+- o worker pode enviar e-mails via `console` ou `smtp`
+- no fluxo com Docker Compose, o SMTP local aponta para o MailHog
 - sucesso marca `PROCESSED`
 - falha atualiza `attempts`, `last_error`, `next_retry_at` e pode marcar `FAILED`

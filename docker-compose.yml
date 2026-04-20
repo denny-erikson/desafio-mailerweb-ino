@@ -60,11 +60,18 @@ services:
     environment:
       POSTGRES_HOST: postgres
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      MAILER_PROVIDER: smtp
+      MAILER_SMTP_HOST: mailhog
+      MAILER_SMTP_PORT: 1025
+      MAILER_SMTP_USE_TLS: "false"
+      MAILER_SMTP_USE_SSL: "false"
     depends_on:
       postgres:
         condition: service_healthy
       backend:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     command:
       - sh
       - -c
@@ -89,8 +96,6 @@ services:
     image: mailhog/mailhog:v1.0.1
     container_name: meeting-room-booking-mailhog
     restart: unless-stopped
-    profiles:
-      - smtp
     ports:
       - "1025:1025"
       - "8025:8025"

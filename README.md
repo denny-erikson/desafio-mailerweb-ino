@@ -8,7 +8,7 @@ O projeto foi dividido em:
 
 - `backend`: API em FastAPI com PostgreSQL, SQLAlchemy, Alembic e worker de outbox
 - `frontend`: aplicação React com Vite
-- `docker-compose.yml`: stack local com PostgreSQL, backend, worker, frontend e MailHog opcional
+- `docker-compose.yml`: stack local com PostgreSQL, backend, worker, frontend e MailHog
 
 ## Stack
 
@@ -67,28 +67,18 @@ Isso sobe:
 - `backend`
 - `worker`
 - `frontend`
+- `mailhog`
 
 URLs úteis:
 
 - frontend: `http://localhost:4173`
 - backend: `http://localhost:8000`
 - documentação da API: `http://localhost:8000/docs`
-
-### 3. Subir o MailHog opcionalmente
-
-O MailHog está disponível como apoio local para inspeção de e-mails, mas hoje o projeto usa `MAILER_PROVIDER=console` por padrão. Ou seja, o worker registra o envio nos logs, e não por SMTP real.
-
-Se quiser subir o MailHog mesmo assim:
-
-```bash
-docker compose --profile smtp up -d --build
-```
-
-URL:
-
 - MailHog: `http://localhost:8025`
 
-### 4. Rodar o seed inicial manualmente
+Ao criar, editar ou cancelar uma reserva, o worker envia a notificação por SMTP para o MailHog. A validação pode ser feita abrindo a interface web e inspecionando a mensagem recebida.
+
+### 3. Rodar o seed inicial manualmente
 
 Se quiser garantir a criação do usuário inicial:
 
@@ -96,7 +86,7 @@ Se quiser garantir a criação do usuário inicial:
 docker compose exec backend poetry run python -m scripts.seed_initial_user
 ```
 
-### 5. Derrubar a stack
+### 4. Derrubar a stack
 
 ```bash
 docker compose down
@@ -186,6 +176,13 @@ As principais variáveis estão em `.env.example`.
 
 - `MAILER_FROM_EMAIL`
 - `MAILER_PROVIDER`
+- `MAILER_SMTP_HOST`
+- `MAILER_SMTP_PORT`
+- `MAILER_SMTP_USERNAME`
+- `MAILER_SMTP_PASSWORD`
+- `MAILER_SMTP_USE_TLS`
+- `MAILER_SMTP_USE_SSL`
+- `MAILER_SMTP_TIMEOUT_SECONDS`
 
 ### Seed inicial
 
@@ -263,7 +260,7 @@ O worker:
 - FastAPI foi escolhida pela rapidez de implementação, boa tipagem e integração simples com Pydantic
 - PostgreSQL foi usado porque o desafio pede atenção especial à concorrência, e a constraint de exclusão resolve bem esse cenário
 - o padrão Outbox + Worker foi mantido no próprio banco para reduzir complexidade operacional
-- o provider inicial de e-mail é `console`, suficiente para demonstrar o processamento assíncrono sem depender de SMTP real
+- o provider de e-mail suporta `console` e `smtp`; para a experiência local em containers, o worker usa SMTP apontando para o MailHog
 - o frontend foi organizado com rotas protegidas, contexto de autenticação e páginas separadas para salas e reservas
 - o `docker compose` foi configurado para facilitar a avaliação com a stack completa em containers
 
@@ -343,4 +340,4 @@ ORDER BY id DESC;
 - o cancelamento de reserva é lógico, sem remoção física do registro
 - a API bloqueia reservas com horário de início no passado
 - o frontend também previne esse envio antes da chamada à API
-- o MailHog está disponível apenas como apoio opcional; o envio atual do worker permanece no provider `console`
+- a interface do MailHog em `http://localhost:8025` permite validar visualmente as notificações geradas pelo worker
