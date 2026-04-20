@@ -47,18 +47,23 @@ export function LoginPage() {
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card">
-        <div className="status-chip">Meeting Room Booking</div>
-        <h1>Acesse sua conta</h1>
-        <p className="auth-copy">
-          Entre com seu usuario para gerenciar salas, reservas e notificacoes.
+    <main className="flex min-h-screen items-center justify-center px-4 py-6">
+      <section className="w-full max-w-md rounded-panel border border-app-border bg-white/90 p-6 shadow-soft md:p-8">
+        <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
+          Meeting Room Booking
+        </span>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-app-strong">
+          Acesse sua conta
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-app-text">
+          Entre com seu usuário para gerenciar salas, reservas e notificações.
         </p>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="field">
-            <span>E-mail</span>
+        <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-app-strong">E-mail</span>
             <input
+              className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
               type="email"
               name="email"
               autoComplete="email"
@@ -69,9 +74,10 @@ export function LoginPage() {
             />
           </label>
 
-          <label className="field">
-            <span>Senha</span>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-app-strong">Senha</span>
             <input
+              className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
               type="password"
               name="password"
               autoComplete="current-password"
@@ -83,12 +89,19 @@ export function LoginPage() {
           </label>
 
           {error ? (
-            <div className="feedback feedback--error" role="alert">
+            <div
+              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              role="alert"
+            >
               {error}
             </div>
           ) : null}
 
-          <button className="primary-button" type="submit" disabled={isSubmitting}>
+          <button
+            className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-app-strong px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-65"
+            type="submit"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Entrando...' : 'Entrar'}
           </button>
         </form>

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { AuthProvider } from './features/auth/AuthContext'
 import * as authApi from './features/auth/authApi'
+import * as bookingsApi from './features/bookings/bookingsApi'
 import * as roomsApi from './features/rooms/roomsApi'
 
 describe('App integration flow', () => {
@@ -21,6 +22,7 @@ describe('App integration flow', () => {
       },
     })
     vi.spyOn(roomsApi, 'fetchRooms').mockResolvedValue([])
+    vi.spyOn(bookingsApi, 'fetchBookings').mockResolvedValue([])
     const createRoomSpy = vi.spyOn(roomsApi, 'createRoom').mockResolvedValue({
       id: 22,
       name: 'Sala Boreal',
@@ -43,7 +45,7 @@ describe('App integration flow', () => {
     await user.type(screen.getByLabelText(/senha/i), '123456')
     await user.click(screen.getByRole('button', { name: /entrar/i }))
 
-    await screen.findByText('Base autenticada pronta')
+    await screen.findByRole('heading', { name: 'Visão geral' })
 
     await user.click(screen.getByRole('link', { name: /^salas$/i }))
 

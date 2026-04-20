@@ -8,12 +8,16 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
 
   if (isBootstrapping) {
     return (
-      <main className="auth-shell">
-        <section className="auth-card auth-card--centered">
-          <div className="status-chip">Verificando sessao...</div>
-          <h1>Carregando acesso</h1>
-          <p className="auth-copy">
-            Estamos restaurando sua sessao antes de abrir o painel.
+      <main className="flex min-h-screen items-center justify-center px-4 py-6">
+        <section className="w-full max-w-md rounded-panel border border-app-border bg-white/90 p-6 text-center shadow-soft">
+          <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
+            Verificando sessão...
+          </span>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-app-strong">
+            Carregando acesso
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-app-text">
+            Estamos restaurando sua sessão antes de abrir o painel.
           </p>
         </section>
       </main>

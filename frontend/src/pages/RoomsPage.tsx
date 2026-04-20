@@ -7,11 +7,11 @@ function getRoomsErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     return (
       error.response?.data?.detail ??
-      'Nao foi possivel carregar as salas no momento.'
+      'Não foi possível carregar as salas no momento.'
     )
   }
 
-  return 'Nao foi possivel carregar as salas no momento.'
+  return 'Não foi possível carregar as salas no momento.'
 }
 
 function getCreateRoomErrorMessage(error: unknown) {
@@ -19,7 +19,7 @@ function getCreateRoomErrorMessage(error: unknown) {
     const detail = error.response?.data?.detail
 
     if (detail === 'Room name already exists') {
-      return 'Ja existe uma sala cadastrada com esse nome.'
+      return 'Já existe uma sala cadastrada com esse nome.'
     }
 
     if (typeof detail === 'string' && detail.trim()) {
@@ -27,7 +27,7 @@ function getCreateRoomErrorMessage(error: unknown) {
     }
   }
 
-  return 'Nao foi possivel criar a sala no momento.'
+  return 'Não foi possível criar a sala no momento.'
 }
 
 function sortRoomsByName(items: Room[]) {
@@ -93,23 +93,30 @@ export function RoomsPage() {
   }
 
   return (
-    <section className="surface-card">
-      <div className="section-header">
-        <div>
-          <div className="status-chip">Salas</div>
-          <h2 className="section-title">Salas disponiveis</h2>
-          <p className="section-copy">
-            Cadastre novas salas e acompanhe quais ambientes ja estao
-            disponiveis para as reservas.
+    <section className="rounded-panel border border-app-border bg-white/90 p-4 shadow-soft md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-1">
+          <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
+            Salas
+          </span>
+          <h2 className="text-3xl font-semibold tracking-tight text-app-strong">
+            Salas disponíveis
+          </h2>
+          <p className="text-sm leading-6 text-app-text">
+            Cadastre novas salas e acompanhe os ambientes disponíveis para
+            reserva.
           </p>
         </div>
       </div>
 
-      <form className="room-form" onSubmit={handleSubmit}>
-        <div className="form-grid">
-          <label className="field">
-            <span>Nome da sala</span>
+      <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-app-strong">
+              Nome da sala
+            </span>
             <input
+              className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
               type="text"
               name="name"
               placeholder="Ex.: Sala Atlas"
@@ -119,9 +126,10 @@ export function RoomsPage() {
             />
           </label>
 
-          <label className="field">
-            <span>Capacidade</span>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-app-strong">Capacidade</span>
             <input
+              className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
               type="number"
               name="capacity"
               min={1}
@@ -134,9 +142,9 @@ export function RoomsPage() {
           </label>
         </div>
 
-        <div className="room-form__actions">
+        <div className="flex justify-end">
           <button
-            className="primary-button primary-button--inline"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-app-strong px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-65"
             type="submit"
             disabled={isSubmitting}
           >
@@ -146,49 +154,74 @@ export function RoomsPage() {
       </form>
 
       {createError ? (
-        <div className="feedback feedback--error" role="alert">
+        <div
+          className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          role="alert"
+        >
           {createError}
         </div>
       ) : null}
 
       {successMessage ? (
-        <div className="feedback feedback--success" role="status">
+        <div
+          className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          role="status"
+        >
           {successMessage}
         </div>
       ) : null}
 
       {isLoading ? (
-        <div className="state-card" aria-live="polite">
-          <strong>Carregando salas...</strong>
-          <p>Estamos consultando a API protegida para montar a lista.</p>
+        <div
+          className="mt-4 rounded-2xl border border-app-border bg-app-muted/80 p-4"
+          aria-live="polite"
+        >
+          <strong className="block text-sm font-medium text-app-strong">
+            Carregando salas...
+          </strong>
+          <p className="mt-1 text-sm text-app-text">
+            Estamos consultando a API protegida para montar a lista.
+          </p>
         </div>
       ) : null}
 
       {!isLoading && loadError ? (
-        <div className="feedback feedback--error" role="alert">
+        <div
+          className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          role="alert"
+        >
           {loadError}
         </div>
       ) : null}
 
       {!isLoading && !loadError && rooms.length === 0 ? (
-        <div className="state-card">
-          <strong>Nenhuma sala cadastrada</strong>
-          <p>
-            Crie a primeira sala por aqui para comecar a gerenciar reservas.
+        <div className="mt-4 rounded-2xl border border-app-border bg-app-muted/80 p-4">
+          <strong className="block text-sm font-medium text-app-strong">
+            Nenhuma sala cadastrada
+          </strong>
+          <p className="mt-1 text-sm text-app-text">
+            Crie a primeira sala por aqui para começar a gerenciar reservas.
           </p>
         </div>
       ) : null}
 
       {!isLoading && !loadError && rooms.length > 0 ? (
-        <div className="rooms-grid">
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {rooms.map((room) => (
-            <article className="room-card" key={room.id}>
-              <div className="room-card__header">
+            <article
+              className="rounded-2xl border border-app-border bg-app-surface p-4"
+              key={room.id}
+            >
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3>{room.name}</h3>
-                  <p>ID #{room.id}</p>
+                  <h3 className="text-base font-semibold text-app-strong">
+                    {room.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-app-text">ID #{room.id}</p>
                 </div>
-                <span className="room-capacity">{room.capacity} lugares</span>
+                <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
+                  {room.capacity} lugares
+                </span>
               </div>
             </article>
           ))}

@@ -6,7 +6,6 @@ import { BookingFormPage } from './pages/BookingFormPage'
 import { LoginPage } from './pages/LoginPage'
 import { RoomsPage } from './pages/RoomsPage'
 import { AppLayout } from './layouts/AppLayout'
-import './App.css'
 
 function App() {
   return (

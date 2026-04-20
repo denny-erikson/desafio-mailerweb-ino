@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import axios from 'axios'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   createBooking,
@@ -51,7 +51,7 @@ function translateBookingApiDetail(detail: string) {
     'Room not found': 'A sala selecionada não foi encontrada.',
     'Booking not found': 'A reserva informada não foi encontrada.',
     'start_at cannot be in the past':
-      'Não é permitido criar ou editar reservas com horário de início no passado.',
+      'Escolha um horário de início a partir do momento atual.',
     'start_at must be before end_at':
       'O horário de início deve ser anterior ao horário de fim.',
     'Booking duration must be at least 15 minutes':
@@ -147,11 +147,6 @@ export function BookingFormPage() {
     }
   }, [bookingId, isEditing])
 
-  const selectedRoom = useMemo(
-    () => rooms.find((room) => String(room.id) === roomId) ?? null,
-    [roomId, rooms],
-  )
-
   function updateParticipant(
     index: number,
     field: keyof ParticipantFormItem,
@@ -187,13 +182,16 @@ export function BookingFormPage() {
       const parsedStartAt = new Date(startAt)
       const parsedEndAt = new Date(endAt)
 
-      if (Number.isNaN(parsedStartAt.getTime()) || Number.isNaN(parsedEndAt.getTime())) {
+      if (
+        Number.isNaN(parsedStartAt.getTime()) ||
+        Number.isNaN(parsedEndAt.getTime())
+      ) {
         throw new Error('Preencha corretamente os horários de início e fim.')
       }
 
       if (parsedStartAt < now) {
         throw new Error(
-          'Não é permitido criar ou editar reservas com horário de início no passado.',
+          'Escolha um horário de início a partir do momento atual.',
         )
       }
 
@@ -230,56 +228,69 @@ export function BookingFormPage() {
   }
 
   return (
-    <section className="surface-card">
-      <div className="section-header">
-        <div>
-          <div className="status-chip">{isEditing ? 'Editar' : 'Nova reserva'}</div>
-          <h2 className="section-title">
+    <section className="rounded-panel border border-app-border bg-white/90 p-4 shadow-soft md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-1">
+          <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
+            {isEditing ? 'Editar' : 'Nova reserva'}
+          </span>
+          <h2 className="text-3xl font-semibold tracking-tight text-app-strong">
             {isEditing ? 'Atualize a reserva' : 'Crie uma nova reserva'}
           </h2>
-          <p className="section-copy">
-            Escolha a sala, defina a janela de horário e adicione os
-            participantes da reunião.
+          <p className="text-sm leading-6 text-app-text">
+            Escolha a sala, defina o horário e adicione os participantes.
           </p>
         </div>
-        <Link className="ghost-button" to="/bookings">
+
+        <Link
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-border px-4 text-sm font-medium text-app-strong transition hover:bg-app-muted"
+          to="/bookings"
+        >
           Voltar
         </Link>
       </div>
 
       {isLoading ? (
-        <div className="state-card" aria-live="polite">
-          <strong>Carregando formulário...</strong>
-          <p>Estamos preparando os dados da reserva e a lista de salas.</p>
+        <div
+          className="mt-4 rounded-2xl border border-app-border bg-app-muted/80 p-4"
+          aria-live="polite"
+        >
+          <strong className="block text-sm font-medium text-app-strong">
+            Carregando formulário...
+          </strong>
+          <p className="mt-1 text-sm text-app-text">
+            Estamos preparando os dados da reserva e a lista de salas.
+          </p>
         </div>
       ) : null}
 
       {!isLoading ? (
-        <form className="booking-form" onSubmit={handleSubmit}>
-          <label className="field">
-            <span>Título</span>
+        <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-app-strong">Título</span>
             <input
+              className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
               type="text"
               placeholder="Ex.: Planejamento semanal"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={event => setTitle(event.target.value)}
               required
             />
           </label>
 
-          <div className="form-grid">
-            <label className="field">
-              <span>Sala</span>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-app-strong">Sala</span>
               <select
-                className="field-select"
+                className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
                 value={roomId}
-                onChange={(event) => setRoomId(event.target.value)}
+                onChange={event => setRoomId(event.target.value)}
                 required
               >
                 <option value="" disabled>
                   Selecione uma sala
                 </option>
-                {rooms.map((room) => (
+                {rooms.map(room => (
                   <option key={room.id} value={room.id}>
                     {room.name} ({room.capacity} lugares)
                   </option>
@@ -287,49 +298,45 @@ export function BookingFormPage() {
               </select>
             </label>
 
-            <div className="form-hint-card">
-              <span className="form-hint-label">Sala escolhida</span>
-              <strong>{selectedRoom?.name ?? 'Nenhuma sala selecionada'}</strong>
-              <small>
-                {selectedRoom
-                  ? `${selectedRoom.capacity} lugares disponíveis`
-                  : 'Selecione uma sala para continuar.'}
-              </small>
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <label className="field">
-              <span>Início</span>
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-app-strong">
+                Início
+              </span>
               <input
+                className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
                 type="datetime-local"
                 value={startAt}
                 min={minDateTimeValue}
-                onChange={(event) => setStartAt(event.target.value)}
+                onChange={event => setStartAt(event.target.value)}
                 required
               />
             </label>
 
-            <label className="field">
-              <span>Fim</span>
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-app-strong">Fim</span>
               <input
+                className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
                 type="datetime-local"
                 value={endAt}
                 min={minDateTimeValue}
-                onChange={(event) => setEndAt(event.target.value)}
+                onChange={event => setEndAt(event.target.value)}
                 required
               />
             </label>
           </div>
 
-          <div className="participants-section">
-            <div className="participants-header">
+          <div className="rounded-2xl border border-app-border bg-app-muted/70 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
-                <h3>Participantes</h3>
-                <p>Adicione pelo menos um participante com e-mail válido.</p>
+                <h3 className="text-base font-semibold text-app-strong">
+                  Participantes
+                </h3>
+                <p className="mt-1 text-sm text-app-text">
+                  Adicione pelo menos um participante com e-mail válido.
+                </p>
               </div>
               <button
-                className="ghost-button"
+                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-border px-4 text-sm font-medium text-app-strong transition hover:bg-white"
                 type="button"
                 onClick={addParticipant}
               >
@@ -337,36 +344,49 @@ export function BookingFormPage() {
               </button>
             </div>
 
-            <div className="participants-list">
+            <div className="mt-4 grid gap-3">
               {participants.map((participant, index) => (
-                <div className="participant-row" key={index}>
-                  <label className="field">
-                    <span>E-mail</span>
+                <div
+                  className="grid gap-3 rounded-2xl border border-app-border bg-white p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  key={index}
+                >
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium text-app-strong">
+                      E-mail
+                    </span>
                     <input
+                      className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
                       type="email"
                       placeholder="pessoa@empresa.com"
                       value={participant.email}
-                      onChange={(event) =>
+                      onChange={event =>
                         updateParticipant(index, 'email', event.target.value)
                       }
                       required
                     />
                   </label>
 
-                  <label className="field">
-                    <span>Nome</span>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium text-app-strong">
+                      Nome
+                    </span>
                     <input
+                      className="min-h-12 rounded-2xl border border-app-border bg-app-surface px-4 text-app-strong outline-none transition focus:border-app-strong"
                       type="text"
                       placeholder="Opcional"
                       value={participant.full_name}
-                      onChange={(event) =>
-                        updateParticipant(index, 'full_name', event.target.value)
+                      onChange={event =>
+                        updateParticipant(
+                          index,
+                          'full_name',
+                          event.target.value,
+                        )
                       }
                     />
                   </label>
 
                   <button
-                    className="ghost-button ghost-button--danger"
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 px-4 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-65 md:self-end"
                     type="button"
                     onClick={() => removeParticipant(index)}
                     disabled={participants.length === 1}
@@ -379,16 +399,26 @@ export function BookingFormPage() {
           </div>
 
           {error ? (
-            <div className="feedback feedback--error" role="alert">
+            <div
+              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              role="alert"
+            >
               {error}
             </div>
           ) : null}
 
-          <div className="form-actions">
-            <Link className="ghost-button" to="/bookings">
+          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end">
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-border px-4 text-sm font-medium text-app-strong transition hover:bg-app-muted"
+              to="/bookings"
+            >
               Cancelar
             </Link>
-            <button className="primary-button primary-button--inline" type="submit" disabled={isSubmitting}>
+            <button
+              className="inline-flex min-h-10 items-center justify-center rounded-xl bg-app-strong px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-65"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting
                 ? 'Salvando...'
                 : isEditing

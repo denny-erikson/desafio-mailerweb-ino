@@ -107,112 +107,160 @@ export function BookingsPage() {
   }
 
   return (
-    <section className="surface-card">
-      <div className="section-header">
-        <div>
-          <div className="status-chip">Reservas</div>
-          <h2 className="section-title">Agenda das reservas</h2>
-          <p className="section-copy">
-            Veja as reuniões cadastradas, seus horários, participantes e o
-            status atual de cada reserva.
+    <section className="rounded-panel border border-app-border bg-white/90 p-4 shadow-soft md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-1">
+          <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
+            Reservas
+          </span>
+          <h2 className="text-3xl font-semibold tracking-tight text-app-strong">
+            Agenda das reservas
+          </h2>
+          <p className="text-sm leading-6 text-app-text">
+            Consulte a agenda, revise participantes e atualize reservas com
+            clareza.
           </p>
         </div>
-        <Link className="primary-button primary-button--inline" to="/bookings/new">
+        <Link
+          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-app-strong px-4 text-sm font-medium text-white transition hover:bg-black"
+          to="/bookings/new"
+        >
           Nova reserva
         </Link>
       </div>
 
       {actionFeedback || routeSuccessMessage ? (
-        <div className="feedback feedback--success" role="status">
+        <div
+          className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+          role="status"
+        >
           {actionFeedback || routeSuccessMessage}
         </div>
       ) : null}
 
       {isLoading ? (
-        <div className="state-card" aria-live="polite">
-          <strong>Carregando reservas...</strong>
-          <p>Estamos consultando as reservas e cruzando com as salas.</p>
+        <div
+          className="mt-4 rounded-2xl border border-app-border bg-app-muted/80 p-4"
+          aria-live="polite"
+        >
+          <strong className="block text-sm font-medium text-app-strong">
+            Carregando reservas...
+          </strong>
+          <p className="mt-1 text-sm text-app-text">
+            Estamos consultando as reservas e cruzando com as salas.
+          </p>
         </div>
       ) : null}
 
       {!isLoading && error ? (
-        <div className="feedback feedback--error" role="alert">
+        <div
+          className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          role="alert"
+        >
           {error}
         </div>
       ) : null}
 
       {!isLoading && !error && bookings.length === 0 ? (
-        <div className="state-card">
-          <strong>Nenhuma reserva cadastrada</strong>
-          <p>
-            Quando as reservas forem criadas, elas vão aparecer aqui com sala,
+        <div className="mt-4 rounded-2xl border border-app-border bg-app-muted/80 p-4">
+          <strong className="block text-sm font-medium text-app-strong">
+            Nenhuma reserva cadastrada
+          </strong>
+          <p className="mt-1 text-sm text-app-text">
+            Quando as reservas forem criadas, elas aparecerão aqui com sala,
             horário e participantes.
           </p>
         </div>
       ) : null}
 
       {!isLoading && !error && bookings.length > 0 ? (
-        <div className="bookings-list">
+        <div className="mt-6 grid gap-4">
           {bookings.map((booking) => (
-            <article className="booking-card" key={booking.id}>
-              <div className="booking-card__header">
-                <div>
-                  <div className="booking-status-row">
+            <article
+              className="rounded-2xl border border-app-border bg-app-surface p-4"
+              key={booking.id}
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={
                         booking.status === 'CANCELED'
-                          ? 'booking-status booking-status--canceled'
-                          : 'booking-status booking-status--active'
+                          ? 'inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700'
+                          : 'inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700'
                       }
                     >
                       {booking.status === 'CANCELED' ? 'Cancelada' : 'Ativa'}
                     </span>
-                    <span className="booking-meta">Reserva #{booking.id}</span>
+                    <span className="inline-flex rounded-full bg-app-muted px-2.5 py-1 text-xs font-medium text-app-text">
+                      Reserva #{booking.id}
+                    </span>
                   </div>
-                  <h3>{booking.title}</h3>
-                  <p>
-                    {roomNameById.get(booking.room_id) ??
-                      `Sala #${booking.room_id}`}
-                  </p>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-app-strong">
+                      {booking.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-app-text">
+                      {roomNameById.get(booking.room_id) ??
+                        `Sala #${booking.room_id}`}
+                    </p>
+                  </div>
                 </div>
-                <div className="booking-schedule">
+
+                <div className="text-sm font-medium text-app-strong">
                   {formatDateRange(booking.start_at, booking.end_at)}
                 </div>
               </div>
 
-              <dl className="booking-details">
-                <div>
-                  <dt>Participantes</dt>
-                  <dd>{booking.participants.length}</dd>
+              <dl className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-app-border bg-white px-4 py-3">
+                  <dt className="text-xs font-medium uppercase tracking-[0.08em] text-app-soft">
+                    Participantes
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-app-strong">
+                    {booking.participants.length}
+                  </dd>
                 </div>
-                <div>
-                  <dt>Criado por</dt>
-                  <dd>Usuário #{booking.created_by_user_id}</dd>
+                <div className="rounded-2xl border border-app-border bg-white px-4 py-3">
+                  <dt className="text-xs font-medium uppercase tracking-[0.08em] text-app-soft">
+                    Criado por
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-app-strong">
+                    Usuário #{booking.created_by_user_id}
+                  </dd>
                 </div>
-                <div>
-                  <dt>Última atualização</dt>
-                  <dd>{new Date(booking.updated_at).toLocaleString('pt-BR')}</dd>
+                <div className="rounded-2xl border border-app-border bg-white px-4 py-3">
+                  <dt className="text-xs font-medium uppercase tracking-[0.08em] text-app-soft">
+                    Última atualização
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-app-strong">
+                    {new Date(booking.updated_at).toLocaleString('pt-BR')}
+                  </dd>
                 </div>
               </dl>
 
-              <div className="booking-participants">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {booking.participants.map((participant) => (
-                  <span className="participant-pill" key={participant.id}>
+                  <span
+                    className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-app-strong ring-1 ring-app-border"
+                    key={participant.id}
+                  >
                     {participant.full_name ?? participant.email}
                   </span>
                 ))}
               </div>
 
-              <div className="booking-actions">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Link
-                  className="ghost-button ghost-button--compact"
+                  className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-border px-4 text-sm font-medium text-app-strong transition hover:bg-app-muted"
                   to={`/bookings/${booking.id}/edit`}
                 >
                   Editar reserva
                 </Link>
                 {booking.status === 'ACTIVE' ? (
                   <button
-                    className="ghost-button ghost-button--compact ghost-button--danger"
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 px-4 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-65"
                     type="button"
                     onClick={() => handleCancelBooking(booking.id)}
                     disabled={cancelingBookingId === booking.id}
