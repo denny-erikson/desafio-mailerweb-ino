@@ -10,3 +10,5 @@ export type CreateRoomPayload = {
   name: string
   capacity: number
 }
+
+export type UpdateRoomPayload = CreateRoomPayload

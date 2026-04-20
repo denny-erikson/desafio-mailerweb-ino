@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
 import axios from 'axios'
-import { createRoom, fetchRooms } from '../features/rooms/roomsApi'
-import type { Room } from '../features/rooms/types'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '../features/feedback/useToast'
+import { createRoom, fetchRooms, updateRoom } from '../features/rooms/roomsApi'
+import type { Room } from '../features/rooms/types'
 
 function getRoomsErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
@@ -31,6 +31,26 @@ function getCreateRoomErrorMessage(error: unknown) {
   return 'Não foi possível criar a sala no momento.'
 }
 
+function getUpdateRoomErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const detail = error.response?.data?.detail
+
+    if (detail === 'Room name already exists') {
+      return 'Já existe uma sala cadastrada com esse nome.'
+    }
+
+    if (detail === 'Room not found') {
+      return 'A sala selecionada não foi encontrada.'
+    }
+
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail
+    }
+  }
+
+  return 'Não foi possível atualizar a sala no momento.'
+}
+
 function sortRoomsByName(items: Room[]) {
   return [...items].sort((firstRoom, secondRoom) =>
     firstRoom.name.localeCompare(secondRoom.name, 'pt-BR'),
@@ -43,6 +63,7 @@ export function RoomsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingRoomId, setEditingRoomId] = useState<number | null>(null)
   const [name, setName] = useState('')
   const [capacity, setCapacity] = useState('8')
 
@@ -74,26 +95,61 @@ export function RoomsPage() {
     setIsSubmitting(true)
 
     try {
-      const createdRoom = await createRoom({
+      const payload = {
         name: name.trim(),
         capacity: Number(capacity),
-      })
+      }
 
-      setRooms((currentRooms) => sortRoomsByName([...currentRooms, createdRoom]))
+      if (editingRoomId !== null) {
+        const updatedRoom = await updateRoom(editingRoomId, payload)
+        setRooms((currentRooms) =>
+          sortRoomsByName(
+            currentRooms.map((room) =>
+              room.id === editingRoomId ? updatedRoom : room,
+            ),
+          ),
+        )
+        showToast({
+          type: 'success',
+          message: 'Sala atualizada com sucesso.',
+        })
+      } else {
+        const createdRoom = await createRoom(payload)
+        setRooms((currentRooms) =>
+          sortRoomsByName([...currentRooms, createdRoom]),
+        )
+        showToast({
+          type: 'success',
+          message: 'Sala criada com sucesso.',
+        })
+      }
+
       setName('')
       setCapacity('8')
-      showToast({
-        type: 'success',
-        message: 'Sala criada com sucesso.',
-      })
+      setEditingRoomId(null)
     } catch (submitError) {
       showToast({
         type: 'error',
-        message: getCreateRoomErrorMessage(submitError),
+        message:
+          editingRoomId !== null
+            ? getUpdateRoomErrorMessage(submitError)
+            : getCreateRoomErrorMessage(submitError),
       })
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function handleEditRoom(room: Room) {
+    setEditingRoomId(room.id)
+    setName(room.name)
+    setCapacity(String(room.capacity))
+  }
+
+  function handleCancelEdit() {
+    setEditingRoomId(null)
+    setName('')
+    setCapacity('8')
   }
 
   return (
@@ -104,11 +160,12 @@ export function RoomsPage() {
             Salas
           </span>
           <h2 className="text-3xl font-semibold tracking-tight text-app-strong">
-            Salas disponíveis
+            {editingRoomId !== null ? 'Editar sala' : 'Salas disponíveis'}
           </h2>
           <p className="text-sm leading-6 text-app-text">
-            Cadastre novas salas e acompanhe os ambientes disponíveis para
-            reserva.
+            {editingRoomId !== null
+              ? 'Atualize o nome e a capacidade da sala selecionada.'
+              : 'Cadastre novas salas e acompanhe os ambientes disponíveis para reserva.'}
           </p>
         </div>
       </div>
@@ -147,13 +204,31 @@ export function RoomsPage() {
         </div>
 
         <div className="flex justify-end">
-          <button
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-app-strong px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-65"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Criando sala...' : 'Criar sala'}
-          </button>
+          <div className="flex flex-wrap justify-end gap-2">
+            {editingRoomId !== null ? (
+              <button
+                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-border px-4 text-sm font-medium text-app-strong transition hover:bg-app-muted"
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isSubmitting}
+              >
+                Cancelar edição
+              </button>
+            ) : null}
+            <button
+              className="inline-flex min-h-10 items-center justify-center rounded-xl bg-app-strong px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-65"
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? editingRoomId !== null
+                  ? 'Salvando alterações...'
+                  : 'Criando sala...'
+                : editingRoomId !== null
+                  ? 'Salvar alterações'
+                  : 'Criar sala'}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -200,14 +275,25 @@ export function RoomsPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-semibold text-app-strong">
+                  <h4 className="truncate text-base font-semibold text-app-strong"
+                    title={ room.name}
+                  >
                     {room.name}
-                  </h3>
+                  </h4>
                   <p className="mt-1 text-sm text-app-text">ID #{room.id}</p>
                 </div>
                 <span className="inline-flex rounded-full bg-app-muted px-3 py-1 text-xs font-medium text-app-strong">
                   {room.capacity} lugares
                 </span>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-border px-4 text-sm font-medium text-app-strong transition hover:bg-app-muted"
+                  type="button"
+                  onClick={() => handleEditRoom(room)}
+                >
+                  Editar
+                </button>
               </div>
             </article>
           ))}
