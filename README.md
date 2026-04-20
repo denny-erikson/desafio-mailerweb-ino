@@ -33,10 +33,10 @@ O projeto foi dividido em:
 ## Funcionalidades implementadas
 
 - autenticação por JWT
-- criação, listagem e detalhamento de salas
+- criação, listagem e visualização de salas
 - criação, edição, listagem e cancelamento lógico de reservas
 - participantes por reserva
-- validações de data, duração e timezone
+- validações de data, duração e fuso horário
 - bloqueio de conflito de horários por regra de negócio e por proteção no PostgreSQL
 - criação de eventos no outbox na mesma transação da reserva
 - worker separado com retry, persistência de erro e idempotência
@@ -262,6 +262,7 @@ O worker:
 - o padrão Outbox + Worker foi mantido no próprio banco para reduzir complexidade operacional
 - o provider de e-mail suporta `console` e `smtp`; para a experiência local em containers, o worker usa SMTP apontando para o MailHog
 - o frontend foi organizado com rotas protegidas, contexto de autenticação e páginas separadas para salas e reservas
+- a criação de salas também foi levada para a interface, o que reduz dependência de operações manuais no backend durante a avaliação
 - o `docker compose` foi configurado para facilitar a avaliação com a stack completa em containers
 
 ## Testes
@@ -297,10 +298,11 @@ npm test
 Coberturas principais:
 
 - login
+- criação de salas
 - criação de reserva
 - bloqueio de horários no passado
 - exibição do erro de conflito
-- integração básica das telas com a camada de API
+- fluxo integrado do app com login, navegação protegida e criação de sala
 
 ## Como verificar o outbox e o worker
 
@@ -341,3 +343,4 @@ ORDER BY id DESC;
 - a API bloqueia reservas com horário de início no passado
 - o frontend também previne esse envio antes da chamada à API
 - a interface do MailHog em `http://localhost:8025` permite validar visualmente as notificações geradas pelo worker
+- a forma mais simples de avaliação é subir toda a stack com `docker compose up -d --build`
