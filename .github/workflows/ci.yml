@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: meeting_room_booking
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d meeting_room_booking"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      APP_NAME: Meeting Room Booking
+      APP_ENV: test
+      APP_DEBUG: "false"
+      API_V1_PREFIX: /api/v1
+      SECRET_KEY: github-actions-secret-key
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      ALGORITHM: HS256
+      BACKEND_HOST: 0.0.0.0
+      BACKEND_PORT: 8000
+      BACKEND_CORS_ORIGINS: http://localhost:4173
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: meeting_room_booking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_SCHEMA: public
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/meeting_room_booking
+      WORKER_POLL_INTERVAL_SECONDS: 5
+      WORKER_BATCH_SIZE: 20
+      OUTBOX_MAX_ATTEMPTS: 5
+      OUTBOX_RETRY_DELAY_SECONDS: 30
+      MAILER_PROVIDER: console
+      MAILER_FROM_EMAIL: no-reply@meeting-room-booking.local
+      MAILER_SMTP_HOST: localhost
+      MAILER_SMTP_PORT: 1025
+      MAILER_SMTP_USE_TLS: "false"
+      MAILER_SMTP_USE_SSL: "false"
+      MAILER_SMTP_TIMEOUT_SECONDS: 10
+      INITIAL_USER_EMAIL: admin@meetingroom.local
+      INITIAL_USER_FULL_NAME: Admin User
+      INITIAL_USER_PASSWORD: 123@mudar
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: "1.8.4"
+
+      - name: Install backend dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Run migrations
+        run: poetry run alembic upgrade head
+
+      - name: Run backend tests
+        run: poetry run pytest -q
+
+  frontend-tests:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    env:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend lint
+        run: npm run lint
+
+      - name: Run frontend build
+        run: npm run build
+
+      - name: Run frontend tests
+        run: npm test
