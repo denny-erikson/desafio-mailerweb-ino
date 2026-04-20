@@ -17,6 +17,10 @@ class RoomCreateRequest(BaseModel):
         return normalized
 
 
+class RoomUpdateRequest(RoomCreateRequest):
+    pass
+
+
 class RoomResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
